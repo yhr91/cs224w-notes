@@ -54,7 +54,7 @@ Broder et al. (!999) took a large snapshot of the web and tried to understand ho
 - Tendrils correspond to edges going out from IN or those going into OUT. TUBES are connections from IN to OUT that bypass SCC.
 -	Disconnected components are not connected to SCC at all
 
-## PageRank - Rankind nodes on the graph
+## PageRank - Ranking nodes on the graph
 
 Not all pages on the web are equal. When we run a query, we don’t want to find all the pages that contain query words but we also want to learn how we rank the pages. How can we decide on importance of pages based on the link structure of the web graph
 
@@ -108,4 +108,52 @@ How to solve dead end: Follow random teleport links with total probability from 
 Importance of j is B times taking one of the outlinks and 1-B probability of jumping anywhere else in the graph
 So we now define a google matrix A which is related to the page rank matrix from before. So, even after adding teleportation we can use the eigenvector
 
+### Computing PageRank: Sparse matrix formulation
 
+The key step is matrix-vector multiplication
+ rnew = A rold
+We want to be able to iterate this as many times as possible. If A, r_old r_new are small and can fit in memory then there is no problem. But if N = 1 billion pages and each entry is 4 bytes. Just for storing r_old and R-new, we would need 8GB of memory. Matrix A has N^2 = 10^{18} entries. This is a large number, close to 10millionGB of memory! 
+
+We can rearrange the computation to look like this:
+
+𝒓 = 𝜷𝑴 ⋅ 𝒓 + [𝟏 − 𝜷/𝑵]/𝑵
+
+This is easier to compute because M is a sparse matrix, multiplying it with a scalar is still sparse, and then multiplying it with a vector is not as computationally intensive. After this, we simply add a constant which is the probability of the random walker directly jumping to r_new. So, now the amount of memory that we need goes down from N^2 to O(N). At every iteration some of the pagerank can leak out and by renomalizing M we can re-insert the leaked page rank.
+
+
+M is a sparse matrix! (with no dead-ends)
+- 10 links per node, approx 10𝑁 entries
+
+So in each iteration, we need to:
+- compute rnew = b M · rold
+- add a constant value (1-b)/N to each entry in rnew
+
+Here is an example of how PageRank would work if applied to a graph:
+Numbers sum to 1000, size of the node is proportional to the number. These are pagerank scores. Node B has veyr high importance because a lot of nodes point to it. These nodes still have importance without in-links because random jump can jump to them. Node C has only one-link but since its from B it also becomes very important. But this is less than B which has a ot of in-links goinginto it.
+
+<Insert the complete algorithm>
+  
+  
+RandomWalk with restarts and Personalized PageRank
+
+Imagine you have a grpah of computer science conferences and authors with professors that publish at those conference. So what is the most related conference to the conference ICDM, given who they publish with and where are the other conferences that htey publish at. This kind of biparitie grpah is like a user-item graph. What is the most related produce for this particular user.
+
+So lets look at this as a bipartite graph - and ask how related are two items or how related are towo users. Given that the ysers have already purchased in the past - what can I recommedn to them, based on what they have common with other users. So, are items A and A' more related than B and B'. 
+
+We can use shortest path or number of common neighbors to determine this. What kinf of graphs would obey this kind of intution. It turns out that random walk on graphs will obey this pageRank. PErsonalized PageRank, ranks proximity of nodes to the teleport nodes S. So I start a random walk at node A and then whenever I teleport I go back to A. This will give me all the nodes that are most similar to A. 
+
+One way to implement this is to take the teleport set and compute the pagerank vector using power iteration. but its quicker to just do a simple random walk
+
+So we would pick the nodes with the higest visit counts. So, this results in a very simple recommender system that works very well in practice. 
+
+The teleport set can also consist of multiple starting poiints
+
+Normal pagerank:
+teleportation vector is uniform
+
+personalized pagerank: teleport to a topic specific set of pages. 
+nodes can have different probabilities of surfer landing there
+
+random walk with restarts:
+- topic specific pagerank where teleport is always to the same node. In this case, we dont need power iteration we can just use random walk and its very fast and easy.
+  
