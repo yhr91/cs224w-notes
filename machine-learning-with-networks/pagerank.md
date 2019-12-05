@@ -43,8 +43,8 @@ G' is now a DAG
 
 Broder et al. (!999) took a large snapshot of the web and tried to understand how the SCCs fit together as a DAG
 
-What did they find:
--	The figure below sorts the starting nodes by the number of nodes that BFS visits when starting from that node
+## Bowtie structure of the graph
+-	Their finding are presented in the figure below. Here the starting nodes are sorted by the number of nodes that BFS visits when starting from that node
 -	If you look at the nodes on the left colored blue, they are able to reach a very small number of nodes before stopping
 -	If you look at the nodes on the left colored blue, they are able to reach a very large number of nodes before stopping
 -	Using these plots we can determine the number of nodes in the IN and OUT component of the bowtie shaped web graph shown below. 
@@ -53,3 +53,59 @@ What did they find:
 - Nodes with both in and out links to the SCC fall in SCC.
 - Tendrils correspond to edges going out from IN or those going into OUT. TUBES are connections from IN to OUT that bypass SCC.
 -	Disconnected components are not connected to SCC at all
+
+## PageRank - Rankind nodes on the graph
+
+Not all pages on the web are equal. When we run a query, we don’t want to find all the pages that contain query words but we also want to learn how we rank the pages. How can we decide on importance of pages based on the link structure of the web graph
+
+The main idea here is that links are votes
+
+In-links into a page are counted as votes for that page which help determine the importance of the page. In-links from important pages count more turning this into a recursive question: A's importance depends on B, whose importance depends on C and so on.
+
+Each link's vote is proportional to the importance of its source page. In the figure below, node j has links from i and k which each contribute importance values equal to $r_i/3$ and $r_k/4$. This is because there are three out-links from node $r_i$ and four out-links from node $k$. Similarly node j's importance is euqally distirbuted between the three out-links that it shares with other nodes.
+
+To summarize, a page is important if it is pointed to by other important pages. Define a rank r_j for node j as:
+$$ eqn $$
+
+### Matrix formulation
+We can formulate this as N PageRank equations using N variables. We could use Gaussian elimination to solve this however however it would take a very long for a large number of pages such as those in the web graph. 
+
+Instead, we can represent the graph as an adjacency matrix M that is column stochstic. This means that all the columns must add up to 0. So for node 'j' all the entries, in column 'j' will sum to 0. This will fulfill the requirement that the importance of any node must sum to 1. We now rewrite the PageRank vector as the following matrix euqaion:
+r = Mr
+
+In this case, the PageRank vector will be the eigen vector of the stochastic web matrix M that corresponds to the eigen value of 1. 
+
+<EV formulation slide text>
+
+### Random walk formulation
+
+PageRank relations are very related to RandomWwalks. Imagine a webgraph and a random surfer. The surfer surfs the graph randomly. At any time (t) he is at any page (i). Then the surfer will select any outgoing link, pick it at random and make a new step, and this process continues infinitely. Let p(t) be the probability that a surfer is at a given page I at time t. P(t) is a probability distirubtion over pages at agiven time t.
+So p(t+1) = M p(t)
+The probability that at (t+1) the surfer is at page (j) will depend on the prob that the surfer was at pages(i) at time (t) and their out-degree. After some time the random walk will reach some steady state. It will converge. 
+So, if we solve r=Mr, r is really just the probability distribution of where this surfer will be at time t. It’s modelling the stationary distrubtion of this random walker process on the graph and will converge to a distribution where the time doesn’t matter anymore, if you let it walk long enough.
+
+### Power law iteration
+
+In other words, r is the limit when we take a vector u and multiply with M long enough. This means that we can efficiently solve for r using power iterations. We keep iterating until we converge based on epsilon. In practice, this tends to converge within 50,100 iterations. This is great because we don’t need to solve a system of equations. We’re just multiplying a vector with a matrix enough times
+
+<Add a vector example to show the math>
+  
+The r you are left with is the page importances. So page 1 has importance 6/15, page 2 has ….
+
+### PageRank: Problems
+
+1.	Dead ends: These are pages that you can get into but have no out-links. As a random surfer, it’s like coming to a cliff and having nowhere else to go. This will leak out importance. Mathematically, this would imply that matrix is no longer column stochastic. 
+2.	Spider traps: These are pages with only seld-edges as outgoing edges causing the surfer to get trapped. Everntually the spider trap will absorb all importance. Imagine I have this graph with a self-loop in B. RS starter somewhere and when he navigates to b he gets stuck in b for the whole time. Powere iteration will converge with b having all the importance but a has no importance. But we don’t want this.
+
+How do we solve this: using random teleportation or random jump
+
+Whenver a RW makes a step, the surfer has two options. The walker can come, flip a coin and with probability Beta, it will keep following the links and with (1- beta) it will teleport to a different webpage. Usually this is around 0.8 to 0.9. This can be visualized as jumping out from any node. 
+
+In spider trap, teleport out in a finite number of steps
+
+How to solve dead end: Follow random teleport links with total probability from 1.0. So if you come to a dead end always teleport. Where do you juimp – to any of the nodes with equal probability. To make the matrix column stochastic the solution is by always teleporting when there is nowhere else to go
+
+Importance of j is B times taking one of the outlinks and 1-B probability of jumping anywhere else in the graph
+So we now define a google matrix A which is related to the page rank matrix from before. So, even after adding teleportation we can use the eigenvector
+
+
