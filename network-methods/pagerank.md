@@ -57,7 +57,7 @@ Broder et al. (1999) took a large snapshot of the web and tried to understand ho
 ![BowTie_1](../assets/img/BowTie_1.png?style=centerme)
 
 -	If you look at the nodes on the left colored blue, they are able to reach a very small number of nodes before stopping
--	If you look at the nodes on the left colored purple, they are able to reach a very large number of nodes before stopping
+-	If you look at the nodes on the right colored magenta, they are able to reach a very large number of nodes before stopping
 -	Using this, we can determine the number of nodes in the IN and OUT component of the bowtie shaped web graph shown below. 
 
 ![BowTie_2](../assets/img/BowTie_2.png?style=centerme)
@@ -80,13 +80,13 @@ Each link's vote is proportional to the importance of its source page. In the fi
 
 ![LinkWeights](../assets/img/LinkWeights.png?style=centerme)
 
-To summarize, a page is important if it is pointed to by other important pages. We can define the page rank $$r_j$$ for node $$j$$ as:
+To summarize, a page is important if it is pointed to by other important pages. Given a set of pages, we can define the page rank $$r_j$$ for node $$j$$ as:
 
 $$ 
 \textbf{r}_j = \sum_{i\rightarrow j}\frac{\textbf{r}_i}{d_i} 
 $$
 
-where $$d_i$$ is the out degree of node i
+where $$i$$ refers to every node that has an outgoing edge into $$j$$ and $$d_i$$ is the out degree of node i.
 
 ### Matrix formulation
 We can formulate these relationships as $$N$$ PageRank equations using $$N$$ variables. We could use Gaussian elimination to solve but this would take a very long time for large graphs such as the web graph. 
@@ -103,13 +103,13 @@ $$
 \sum_i \textbf{r}_i = 1
 $$
 
-This will fulfill the requirement that the importance of any node must sum to 1. We now rewrite the PageRank vector as the following matrix equation:
+This will fulfill the requirement that the importance of every node must sum to 1. We now rewrite the PageRank vector as the following matrix equation:
 
 $$
 \textbf{r} = \textbf{M}.\textbf{r}
 $$
 
-In this case, the PageRank vector will be the eigen vector of the stochastic web matrix $$\textbf{M}$$ that corresponds to the eigen value of 1. 
+In this case, the PageRank vector will be the eigenvector of the stochastic web matrix $$\textbf{M}$$ that corresponds to the eigenvalue of 1. 
 
 ### Random walk formulation
 
@@ -119,13 +119,13 @@ $$
 p(t+1) = \textbf{M}\cdot p(t) 
 $$
 
-After some time the random walk will reach a steady state:
+As $$t$$ approaches infinity, the random walk will reach a steady state:
 
 $$
 p(t+1) = \textbf{M}\cdot p(t) = p(t)
 $$
 
-When we solve the equation $$\textbf{r}=\textbf{M}\cdot \textbf{r}$$; $$\textbf{r}$$ is really just the probability distribution of where this surfer will be at time $$\textbf{t}$$. It’s modeling the stationary distribution of this random walker process on the graph.
+When we solve the equation $$\textbf{r}=\textbf{M}\cdot \textbf{r}$$; $$\textbf{r}$$ is really just the probability distribution of where this surfer will be at time $$\textbf{t}$$, when $$t$$ approaches infinity. It’s modeling the stationary distribution of this random walker process on the graph.
 
 ### Power law iteration
 
@@ -234,7 +234,7 @@ r^{old} = r^{new}
 $$
   
   
-## RandomWalk with restarts and Personalized PageRank
+## Personalized PageRank and random walk with restarts
 
 Imagine we have a bipartite graph consisting of users on one side (circles in the figure below) and items on the other (squares). We would like to ask how related two items are or how related two users are. Given that the users have already purchased in the past - what can we recommend to them, based on what they have in common with other users.  
 
@@ -246,7 +246,7 @@ One way to implement this is to take the teleport set and compute the pagerank v
 
 ![QPPR](../assets/img/QPPR.png?style=centerme)
 
-It is able to account for
+Random walk with restarts is able to account for
 - Multiple connections
 - Multiple paths
 - Direct and indirect connections
